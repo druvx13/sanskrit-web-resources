@@ -8,14 +8,11 @@
     let token = '';
     let repoConfig = { owner: '', repo: '', branch: 'main' };
 
+    // ── Data loading / saving ──
     function loadData() {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
-            try {
-                currentData = JSON.parse(stored);
-            } catch (e) {
-                currentData = cloneDefault();
-            }
+            try { currentData = JSON.parse(stored); } catch (e) { currentData = cloneDefault(); }
         } else {
             currentData = cloneDefault();
         }
@@ -89,8 +86,6 @@
                 sel.value = currentVal;
             }
         });
-
-        // Populate move source/destination category selects separately
         populateMoveCatSelects();
         updateSubSelect();
     }
@@ -130,19 +125,15 @@
         const destCatIdx = document.getElementById('move-dest-cat').value;
         const srcSub = document.getElementById('move-src-sub');
         const destSub = document.getElementById('move-dest-sub');
-
         [srcSub, destSub].forEach(sel => sel.innerHTML = '<option value="">-- select --</option>');
-
         if (srcCatIdx !== '' && srcCatIdx !== null) {
             currentData[srcCatIdx].subCategories.forEach((sub, idx) => {
-                const label = sub.name || '(no label)';
-                srcSub.add(new Option(label, idx));
+                srcSub.add(new Option(sub.name || '(no label)', idx));
             });
         }
         if (destCatIdx !== '' && destCatIdx !== null) {
             currentData[destCatIdx].subCategories.forEach((sub, idx) => {
-                const label = sub.name || '(no label)';
-                destSub.add(new Option(label, idx));
+                destSub.add(new Option(sub.name || '(no label)', idx));
             });
         }
         renderMoveLinkList();
@@ -155,13 +146,11 @@
         const catIdx = document.getElementById('move-src-cat').value;
         const subIdx = document.getElementById('move-src-sub').value;
         if (catIdx === '' || subIdx === '') return;
-
         const links = currentData[catIdx].subCategories[subIdx].links;
         if (links.length === 0) {
             container.textContent = '(no links)';
             return;
         }
-
         links.forEach((link, i) => {
             const div = document.createElement('div');
             div.className = 'move-link-item';
@@ -182,10 +171,10 @@
         const preview = document.getElementById('data-preview');
         if (!preview) return;
         preview.innerHTML = '';
-        currentData.forEach((cat, ci) => {
+        currentData.forEach((cat) => {
             const catDiv = document.createElement('div');
             catDiv.innerHTML = `<strong>${cat.primary}</strong>`;
-            cat.subCategories.forEach((sub, si) => {
+            cat.subCategories.forEach((sub) => {
                 const subDiv = document.createElement('div');
                 subDiv.style.marginLeft = '20px';
                 subDiv.textContent = `↳ ${sub.name || '(no label)'} [${sub.links.length} links]`;
@@ -195,6 +184,7 @@
         });
     }
 
+    // ── Inline editing for the link list ──
     function renderLinkList() {
         const container = document.getElementById('link-list-container');
         if (!container) return;
@@ -202,38 +192,74 @@
         const catIdx = document.getElementById('link-cat-select').value;
         const subIdx = document.getElementById('link-sub-select').value;
         if (catIdx === '' || subIdx === '') return;
+
         const links = currentData[catIdx].subCategories[subIdx].links;
         links.forEach((link, li) => {
             const div = document.createElement('div');
             div.className = 'list-item';
-            div.innerHTML = `<div class="inline-link">
-                <textarea readonly rows="1" style="flex:1;">${link.url}</textarea>
-                <textarea readonly rows="1" style="flex:2;">${link.desc}</textarea>
-                <button data-index="${li}" class="edit-link-btn">Edit</button>
-                <button data-index="${li}" class="delete-link-btn">Delete</button>
-            </div>`;
-            container.appendChild(div);
-        });
+            div.dataset.index = li;
 
-        document.querySelectorAll('.edit-link-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const idx = this.getAttribute('data-index');
-                const link = currentData[catIdx].subCategories[subIdx].links[idx];
-                const newUrl = prompt('Edit URL:', link.url);
-                if (newUrl !== null) {
-                    link.url = newUrl.trim();
-                    const newDesc = prompt('Edit description:', link.desc);
-                    if (newDesc !== null) link.desc = newDesc.trim();
-                    refreshAll();
-                }
+            // Normal view (read-only textareas, Edit / Delete buttons)
+            const normalView = document.createElement('div');
+            normalView.className = 'inline-link normal-view';
+            normalView.innerHTML = `
+                <textarea readonly rows="1" style="flex:1;" class="url-text">${link.url}</textarea>
+                <textarea readonly rows="1" style="flex:2;" class="desc-text">${link.desc}</textarea>
+                <button class="edit-link-btn">Edit</button>
+                <button class="delete-link-btn">Delete</button>
+            `;
+
+            // Editing view (hidden by default)
+            const editView = document.createElement('div');
+            editView.className = 'inline-link edit-view';
+            editView.style.display = 'none';
+            editView.innerHTML = `
+                <input type="text" style="flex:1;" class="url-input" value="${link.url}">
+                <input type="text" style="flex:2;" class="desc-input" value="${link.desc}">
+                <button class="save-link-btn">Save</button>
+                <button class="cancel-link-btn">Cancel</button>
+            `;
+
+            div.appendChild(normalView);
+            div.appendChild(editView);
+            container.appendChild(div);
+
+            // Edit button -> switch to edit mode
+            div.querySelector('.edit-link-btn').addEventListener('click', () => {
+                normalView.style.display = 'none';
+                editView.style.display = 'flex';
+                editView.querySelector('.url-input').value = link.url;
+                editView.querySelector('.desc-input').value = link.desc;
             });
-        });
-        document.querySelectorAll('.delete-link-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const idx = this.getAttribute('data-index');
+
+            // Cancel button -> switch back
+            div.querySelector('.cancel-link-btn').addEventListener('click', () => {
+                editView.style.display = 'none';
+                normalView.style.display = 'flex';
+            });
+
+            // Save button -> update data and refresh only this row
+            div.querySelector('.save-link-btn').addEventListener('click', () => {
+                const newUrl = editView.querySelector('.url-input').value.trim();
+                const newDesc = editView.querySelector('.desc-input').value.trim();
+                if (!newUrl || !newDesc) {
+                    displayStatus('Both URL and description are required.', 'red');
+                    return;
+                }
+                link.url = newUrl;
+                link.desc = newDesc;
+                // Re-render the whole list (simple, and the editing row stays in place visually)
+                // To avoid losing scroll position, we could update only this row, but re-rendering is fine.
+                renderLinkList();
+                saveLocal(); // auto-save after edit
+            });
+
+            // Delete button
+            div.querySelector('.delete-link-btn').addEventListener('click', () => {
                 if (confirm('Delete this link?')) {
-                    currentData[catIdx].subCategories[subIdx].links.splice(idx, 1);
-                    refreshAll();
+                    currentData[catIdx].subCategories[subIdx].links.splice(li, 1);
+                    renderLinkList();
+                    saveLocal();
                 }
             });
         });
@@ -243,13 +269,14 @@
         populateCatSelects();
         renderPreview();
         renderLinkList();
-        // Also refresh move UI if it has selections
-        const srcCat = document.getElementById('move-src-cat').value;
-        const srcSub = document.getElementById('move-src-sub').value;
-        if (srcCat !== '' && srcSub !== '') renderMoveLinkList();
+        // also refresh move if selections exist
+        if (document.getElementById('move-src-cat').value !== '' &&
+            document.getElementById('move-src-sub').value !== '') {
+            renderMoveLinkList();
+        }
     }
 
-    // ── Move links implementation ──
+    // ── Move links ──
     function handleMoveLinks() {
         const srcCatIdx = document.getElementById('move-src-cat').value;
         const srcSubIdx = document.getElementById('move-src-sub').value;
@@ -260,9 +287,8 @@
             return displayStatus('Please select both source and destination categories and sub‑categories.', 'red');
         }
         if (srcCatIdx === destCatIdx && srcSubIdx === destSubIdx) {
-            return displayStatus('Source and destination are the same. No move performed.', 'darkorange');
+            return displayStatus('Source and destination are the same.', 'darkorange');
         }
-
         const checkboxes = document.querySelectorAll('#move-src-links input[type="checkbox"]:checked');
         if (checkboxes.length === 0) {
             return displayStatus('No links selected.', 'darkorange');
@@ -270,33 +296,26 @@
 
         const srcLinks = currentData[srcCatIdx].subCategories[srcSubIdx].links;
         const destLinks = currentData[destCatIdx].subCategories[destSubIdx].links;
-
-        // Collect indices to move (in descending order to avoid index shift when removing)
         const indicesToMove = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a,b) => b - a);
         const movedLinks = [];
-
         indicesToMove.forEach(idx => {
             movedLinks.push(srcLinks[idx]);
             srcLinks.splice(idx, 1);
         });
-
-        // Add to destination (in original order, so reverse the movedLinks array)
         movedLinks.reverse();
         destLinks.push(...movedLinks);
-
         displayStatus(`Moved ${movedLinks.length} link(s).`, 'green');
         refreshAll();
-        // Uncheck all
+        // uncheck
         document.querySelectorAll('#move-src-links input[type="checkbox"]').forEach(cb => cb.checked = false);
     }
 
-    // ── Category / Sub / Link handlers ──
+    // ── Category / Sub handlers ──
     function handleAddCategory() {
-        const nameInput = document.getElementById('new-cat-name');
-        const name = nameInput.value.trim();
+        const name = document.getElementById('new-cat-name').value.trim();
         if (!name) return displayStatus('Category name required.', 'red');
         currentData.push({ primary: name, subCategories: [] });
-        nameInput.value = '';
+        document.getElementById('new-cat-name').value = '';
         refreshAll();
     }
 
@@ -313,7 +332,8 @@
     function handleDeleteCategory() {
         const sel = document.getElementById('edit-cat-select');
         if (sel.value === '') return displayStatus('Select a category.', 'red');
-        if (confirm(`Delete category "${currentData[sel.value].primary}" and all its sub‑categories?`)) {
+        const cat = currentData[sel.value];
+        if (confirm(`Delete category "${cat.primary}" and all its sub‑categories?`)) {
             currentData.splice(sel.value, 1);
             refreshAll();
         }
@@ -322,10 +342,9 @@
     function handleAddEditSub() {
         const catIdx = document.getElementById('sub-cat-target').value;
         if (catIdx === '') return displayStatus('Select a target category.', 'red');
-        const nameInput = document.getElementById('new-sub-name');
-        const subName = nameInput.value.trim();
+        const subName = document.getElementById('new-sub-name').value.trim();
         currentData[catIdx].subCategories.push({ name: subName || null, links: [] });
-        nameInput.value = '';
+        document.getElementById('new-sub-name').value = '';
         refreshAll();
     }
 
@@ -333,7 +352,8 @@
         const catIdx = document.getElementById('link-cat-select').value;
         const subIdx = document.getElementById('link-sub-select').value;
         if (catIdx === '' || subIdx === '') return displayStatus('Select category and sub‑category.', 'red');
-        if (confirm(`Delete sub‑category?`)) {
+        const sub = currentData[catIdx].subCategories[subIdx];
+        if (confirm(`Delete sub‑category "${sub.name || '(no label)'}" and its ${sub.links.length} links?`)) {
             currentData[catIdx].subCategories.splice(subIdx, 1);
             refreshAll();
         }
@@ -342,7 +362,7 @@
     function handleAddLink() {
         const catIdx = document.getElementById('link-cat-select').value;
         const subIdx = document.getElementById('link-sub-select').value;
-        if (catIdx === '' || subIdx === '') return displayStatus('Select category and sub‑category first.', 'red');
+        if (catIdx === '' || subIdx === '') return displayStatus('Select category and sub‑category.', 'red');
         const url = document.getElementById('new-link-url').value.trim();
         const desc = document.getElementById('new-link-desc').value.trim();
         if (!url || !desc) return displayStatus('Both URL and description are required.', 'red');
@@ -352,7 +372,7 @@
         refreshAll();
     }
 
-    // ── GitHub API functions ──
+    // ── GitHub API ──
     function getAuthHeaders() {
         if (!token) return null;
         return {
@@ -381,7 +401,6 @@
         if (!token) return displayStatus('Please enter and save a GitHub token first.', 'red');
         saveRepoConfig();
         if (!repoConfig.owner || !repoConfig.repo) return displayStatus('Repository owner and name are required.', 'red');
-
         const content = generateDataJSContent();
         const headers = getAuthHeaders();
         const body = {
@@ -389,7 +408,6 @@
             content: btoa(unescape(encodeURIComponent(content))),
             branch: repoConfig.branch
         };
-
         try {
             const sha = await getFileSHA();
             if (sha) body.sha = sha;
@@ -410,11 +428,10 @@
         }
     }
 
-    // ── Initialization ──
+    // ── Bind events ──
     function bindEvents() {
-        // Token management
         document.getElementById('save-token-btn').addEventListener('click', saveToken);
-        document.getElementById('clear-token-btn').addEventListener('click', function() {
+        document.getElementById('clear-token-btn').addEventListener('click', () => {
             localStorage.removeItem(TOKEN_KEY);
             token = '';
             document.getElementById('github-token-input').value = '';
@@ -427,7 +444,6 @@
             this.textContent = isPassword ? 'Hide' : 'Show';
         });
         document.getElementById('github-token-input').addEventListener('change', saveToken);
-
         ['repo-owner', 'repo-name', 'repo-branch'].forEach(id => {
             document.getElementById(id).addEventListener('change', saveRepoConfig);
         });
@@ -438,33 +454,32 @@
         document.getElementById('add-sub-btn').addEventListener('click', handleAddEditSub);
         document.getElementById('delete-sub-btn').addEventListener('click', handleDeleteSub);
         document.getElementById('add-link-btn').addEventListener('click', handleAddLink);
-        document.getElementById('link-cat-select').addEventListener('change', function() {
+
+        document.getElementById('link-cat-select').addEventListener('change', () => {
             updateSubSelect();
             renderLinkList();
         });
         document.getElementById('link-sub-select').addEventListener('change', renderLinkList);
 
-        // Move links selects
-        document.getElementById('move-src-cat').addEventListener('change', function() {
+        document.getElementById('move-src-cat').addEventListener('change', () => {
             updateMoveSubSelects();
         });
         document.getElementById('move-src-sub').addEventListener('change', renderMoveLinkList);
-        document.getElementById('move-dest-cat').addEventListener('change', function() {
+        document.getElementById('move-dest-cat').addEventListener('change', () => {
             updateMoveSubSelects();
         });
-        // destination sub change doesn't need special handler
         document.getElementById('move-links-btn').addEventListener('click', handleMoveLinks);
 
         document.getElementById('save-local-btn').addEventListener('click', saveLocal);
         document.getElementById('push-github-btn').addEventListener('click', pushToGitHub);
-        document.getElementById('reset-btn').addEventListener('click', function() {
-            if (confirm('Reset to default data? This will replace everything.')) {
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if (confirm('Reset to default data?')) {
                 currentData = cloneDefault();
                 refreshAll();
                 saveLocal();
             }
         });
-        document.getElementById('export-btn').addEventListener('click', function() {
+        document.getElementById('export-btn').addEventListener('click', () => {
             const blob = new Blob([generateDataJSContent()], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
