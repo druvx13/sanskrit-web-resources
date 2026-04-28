@@ -146,5 +146,9 @@ window.SANSKRIT_DATA = [
         ]
       }
     ]
+  },
+  {
+    "primary": "FONTS",
+    "subCategories": []
   }
 ];
