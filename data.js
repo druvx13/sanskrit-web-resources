@@ -126,6 +126,10 @@ window.SANSKRIT_DATA = [
     "subCategories": [
       {
         "name": null,
+        "links": []
+      },
+      {
+        "name": "TRANSLITERATORS",
         "links": [
           {
             "url": "https://www.aksharamukha.com/",
@@ -138,20 +142,17 @@ window.SANSKRIT_DATA = [
           {
             "url": "https://learnsanskrit.org/tools/sanscript/",
             "desc": "Sanscript. A lightweight, robust text conversion utility. It is highly effective for rapidly and cleanly transliterating phonetic text between Devanagari, IAST, standard Roman, and various other scripts."
-          },
+          }
+        ]
+      },
+      {
+        "name": "TRANSLATORS",
+        "links": [
           {
             "url": "https://dharmamitra.org/translate",
             "desc": "Dharmamitra. A specialized machine translation and parsing tool designed to assist researchers and translators in breaking down and translating classical Sanskrit and Buddhist hybrid texts into English."
           }
         ]
-      },
-      {
-        "name": "TRANSLITERATORS",
-        "links": []
-      },
-      {
-        "name": "TRANSLATORS",
-        "links": []
       }
     ]
   },
