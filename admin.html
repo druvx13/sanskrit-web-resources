@@ -117,7 +117,19 @@
             <input type="text" id="new-sub-name" placeholder="Sub‑label">
         </label>
         <button id="add-sub-btn">Add / Edit Sub‑Category</button>
-        <button id="delete-sub-btn">Delete Selected Sub‑Category</button>
+    </div>
+
+    <!-- ✨ NEW dedicated deletion section -->
+    <div class="editor-section">
+        <h2>Delete a Sub‑Category</h2>
+        <p>Select a category and the sub‑category you want to permanently remove.</p>
+        <label>Category:
+            <select id="del-sub-cat-select"></select>
+        </label>
+        <label>Sub‑Category to delete:
+            <select id="del-sub-select"></select>
+        </label>
+        <button id="del-sub-btn">Delete Selected Sub‑Category</button>
     </div>
 
     <div class="editor-section">
@@ -135,7 +147,6 @@
         </div>
     </div>
 
-    <!-- NEW MOVE LINKS SECTION -->
     <div class="editor-section">
         <h2>Move Links</h2>
         <p>Select a source category and sub‑category, check the links you want to move, then choose a destination category and sub‑category.</p>
