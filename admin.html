@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin – Sanskrit Resources Data Editor</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 15px;
+            padding: 8px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 { text-align: center; font-size: 1.5rem; margin-bottom: 10px; }
+        .editor-section {
+            border: 1px solid #aaa;
+            padding: 10px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+        label { display: block; margin-top: 8px; font-weight: bold; }
+        input[type="text"], input[type="password"], textarea, select {
+            width: 100%;
+            font-family: inherit;
+            font-size: 14px;
+            padding: 4px;
+            margin-top: 2px;
+        }
+        button {
+            font-family: inherit;
+            font-size: 14px;
+            padding: 4px 12px;
+            margin: 6px 4px 0 0;
+        }
+        .list-item {
+            border: 1px solid #ccc;
+            padding: 6px;
+            margin: 4px 0;
+        }
+        .inline-link { display: flex; gap: 6px; align-items: flex-start; }
+        .inline-link textarea { flex: 1; min-height: 2.5em; }
+        .inline-link button { align-self: center; }
+        .token-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #eee;
+            padding: 6px;
+            margin-bottom: 8px;
+        }
+        .token-area input { flex: 1; }
+        .repo-config input { margin-bottom: 4px; }
+        #status-message { margin: 8px 0; min-height: 1.2em; }
+    </style>
+</head>
+<body>
+    <h1>Admin Interface – Edit Sanskrit Resources</h1>
+
+    <div class="token-area">
+        <label style="margin:0; white-space:nowrap;">GitHub Token:</label>
+        <input type="password" id="github-token-input" placeholder="ghp_...">
+        <button id="toggle-token-vis">Show</button>
+        <button id="save-token-btn">Save Token</button>
+        <button id="clear-token-btn">Clear Token</button>
+    </div>
+
+    <div class="repo-config">
+        <label>Repository owner: <input type="text" id="repo-owner" placeholder="your-username"></label>
+        <label>Repository name: <input type="text" id="repo-name" placeholder="your-repo"></label>
+        <label>Branch (usually main): <input type="text" id="repo-branch" value="main"></label>
+    </div>
+
+    <div id="status-message"></div>
+
+    <div class="editor-section">
+        <h2>Current Data Structure</h2>
+        <div id="data-preview"></div>
+    </div>
+
+    <div class="editor-section">
+        <h2>Add / Edit Primary Category</h2>
+        <label>Category Name: <input type="text" id="new-cat-name" placeholder="e.g., NEW CATEGORY"></label>
+        <button id="add-cat-btn">Add Category</button>
+        <select id="edit-cat-select" style="margin-top:8px;">
+            <option value="">-- Edit existing category --</option>
+        </select>
+        <button id="rename-cat-btn">Rename Selected</button>
+        <button id="delete-cat-btn">Delete Selected</button>
+    </div>
+
+    <div class="editor-section">
+        <h2>Manage Sub‑Categories</h2>
+        <label>Target Category:
+            <select id="sub-cat-target"></select>
+        </label>
+        <label>Sub‑Category Name (leave empty for no label):
+            <input type="text" id="new-sub-name" placeholder="Sub‑label">
+        </label>
+        <button id="add-sub-btn">Add / Edit Sub‑Category</button>
+        <button id="delete-sub-btn">Delete Selected Sub‑Category</button>
+    </div>
+
+    <div class="editor-section">
+        <h2>Links within a Sub‑Category</h2>
+        <label>Select Category & Sub‑Category:
+            <select id="link-cat-select"></select>
+            <select id="link-sub-select"></select>
+        </label>
+        <div id="link-list-container" style="margin-top:8px;"></div>
+        <div style="margin-top:8px;">
+            <h3>Add Link</h3>
+            <label>URL: <input type="text" id="new-link-url" placeholder="https://..."></label>
+            <label>Description: <textarea id="new-link-desc" rows="3"></textarea></label>
+            <button id="add-link-btn">Add Link</button>
+        </div>
+    </div>
+
+    <div class="editor-section">
+        <button id="save-local-btn" style="font-weight:bold;">Save to Browser Storage</button>
+        <button id="push-github-btn" style="font-weight:bold;">Push to GitHub</button>
+        <button id="reset-btn">Reset to Default Data (from data.js)</button>
+        <button id="export-btn">Export Data as JSON</button>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
