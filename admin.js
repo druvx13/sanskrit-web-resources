@@ -89,7 +89,26 @@
                 sel.value = currentVal;
             }
         });
+
+        // Populate move source/destination category selects separately
+        populateMoveCatSelects();
         updateSubSelect();
+    }
+
+    function populateMoveCatSelects() {
+        const srcCat = document.getElementById('move-src-cat');
+        const destCat = document.getElementById('move-dest-cat');
+        [srcCat, destCat].forEach(sel => {
+            if (!sel) return;
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="">-- select --</option>';
+            currentData.forEach((cat, idx) => {
+                sel.add(new Option(cat.primary, idx));
+            });
+            if (currentVal !== '' && sel.querySelector(`option[value="${currentVal}"]`)) {
+                sel.value = currentVal;
+            }
+        });
     }
 
     function updateSubSelect() {
@@ -104,6 +123,59 @@
                 subSel.add(new Option(label, idx));
             });
         }
+    }
+
+    function updateMoveSubSelects() {
+        const srcCatIdx = document.getElementById('move-src-cat').value;
+        const destCatIdx = document.getElementById('move-dest-cat').value;
+        const srcSub = document.getElementById('move-src-sub');
+        const destSub = document.getElementById('move-dest-sub');
+
+        [srcSub, destSub].forEach(sel => sel.innerHTML = '<option value="">-- select --</option>');
+
+        if (srcCatIdx !== '' && srcCatIdx !== null) {
+            currentData[srcCatIdx].subCategories.forEach((sub, idx) => {
+                const label = sub.name || '(no label)';
+                srcSub.add(new Option(label, idx));
+            });
+        }
+        if (destCatIdx !== '' && destCatIdx !== null) {
+            currentData[destCatIdx].subCategories.forEach((sub, idx) => {
+                const label = sub.name || '(no label)';
+                destSub.add(new Option(label, idx));
+            });
+        }
+        renderMoveLinkList();
+    }
+
+    function renderMoveLinkList() {
+        const container = document.getElementById('move-src-links');
+        if (!container) return;
+        container.innerHTML = '';
+        const catIdx = document.getElementById('move-src-cat').value;
+        const subIdx = document.getElementById('move-src-sub').value;
+        if (catIdx === '' || subIdx === '') return;
+
+        const links = currentData[catIdx].subCategories[subIdx].links;
+        if (links.length === 0) {
+            container.textContent = '(no links)';
+            return;
+        }
+
+        links.forEach((link, i) => {
+            const div = document.createElement('div');
+            div.className = 'move-link-item';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = 'move-link-' + i;
+            checkbox.value = i;
+            const label = document.createElement('label');
+            label.htmlFor = 'move-link-' + i;
+            label.textContent = `${link.url} — ${link.desc.substring(0, 70)}…`;
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            container.appendChild(div);
+        });
     }
 
     function renderPreview() {
@@ -143,7 +215,6 @@
             container.appendChild(div);
         });
 
-        // Bind link edit/delete
         document.querySelectorAll('.edit-link-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const idx = this.getAttribute('data-index');
@@ -172,6 +243,51 @@
         populateCatSelects();
         renderPreview();
         renderLinkList();
+        // Also refresh move UI if it has selections
+        const srcCat = document.getElementById('move-src-cat').value;
+        const srcSub = document.getElementById('move-src-sub').value;
+        if (srcCat !== '' && srcSub !== '') renderMoveLinkList();
+    }
+
+    // ── Move links implementation ──
+    function handleMoveLinks() {
+        const srcCatIdx = document.getElementById('move-src-cat').value;
+        const srcSubIdx = document.getElementById('move-src-sub').value;
+        const destCatIdx = document.getElementById('move-dest-cat').value;
+        const destSubIdx = document.getElementById('move-dest-sub').value;
+
+        if (srcCatIdx === '' || srcSubIdx === '' || destCatIdx === '' || destSubIdx === '') {
+            return displayStatus('Please select both source and destination categories and sub‑categories.', 'red');
+        }
+        if (srcCatIdx === destCatIdx && srcSubIdx === destSubIdx) {
+            return displayStatus('Source and destination are the same. No move performed.', 'darkorange');
+        }
+
+        const checkboxes = document.querySelectorAll('#move-src-links input[type="checkbox"]:checked');
+        if (checkboxes.length === 0) {
+            return displayStatus('No links selected.', 'darkorange');
+        }
+
+        const srcLinks = currentData[srcCatIdx].subCategories[srcSubIdx].links;
+        const destLinks = currentData[destCatIdx].subCategories[destSubIdx].links;
+
+        // Collect indices to move (in descending order to avoid index shift when removing)
+        const indicesToMove = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a,b) => b - a);
+        const movedLinks = [];
+
+        indicesToMove.forEach(idx => {
+            movedLinks.push(srcLinks[idx]);
+            srcLinks.splice(idx, 1);
+        });
+
+        // Add to destination (in original order, so reverse the movedLinks array)
+        movedLinks.reverse();
+        destLinks.push(...movedLinks);
+
+        displayStatus(`Moved ${movedLinks.length} link(s).`, 'green');
+        refreshAll();
+        // Uncheck all
+        document.querySelectorAll('#move-src-links input[type="checkbox"]').forEach(cb => cb.checked = false);
     }
 
     // ── Category / Sub / Link handlers ──
@@ -197,7 +313,7 @@
     function handleDeleteCategory() {
         const sel = document.getElementById('edit-cat-select');
         if (sel.value === '') return displayStatus('Select a category.', 'red');
-        if (confirm(`Delete category "${currentData[sel.value].primary}"?`)) {
+        if (confirm(`Delete category "${currentData[sel.value].primary}" and all its sub‑categories?`)) {
             currentData.splice(sel.value, 1);
             refreshAll();
         }
@@ -248,10 +364,10 @@
     async function getFileSHA() {
         const headers = getAuthHeaders();
         if (!headers) throw new Error('No GitHub token provided.');
-        saveRepoConfig(); // ensure latest config
+        saveRepoConfig();
         const url = `https://api.github.com/repos/${repoConfig.owner}/${repoConfig.repo}/contents/data.js?ref=${repoConfig.branch}`;
         const response = await fetch(url, { headers });
-        if (response.status === 404) return null; // file doesn't exist yet
+        if (response.status === 404) return null;
         if (!response.ok) throw new Error(`GitHub API error: ${response.statusText}`);
         const data = await response.json();
         return data.sha;
@@ -270,7 +386,7 @@
         const headers = getAuthHeaders();
         const body = {
             message: 'Update Sanskrit resources data',
-            content: btoa(unescape(encodeURIComponent(content))), // base64
+            content: btoa(unescape(encodeURIComponent(content))),
             branch: repoConfig.branch
         };
 
@@ -288,13 +404,13 @@
                 throw new Error(err.message || response.statusText);
             }
             displayStatus('Successfully pushed to GitHub!', 'green');
-            saveLocal(); // also update local copy
+            saveLocal();
         } catch (error) {
             displayStatus('Push failed: ' + error.message, 'red');
         }
     }
 
-    // ── Initial setup & event binding ──
+    // ── Initialization ──
     function bindEvents() {
         // Token management
         document.getElementById('save-token-btn').addEventListener('click', saveToken);
@@ -312,7 +428,6 @@
         });
         document.getElementById('github-token-input').addEventListener('change', saveToken);
 
-        // Repo config save on blur
         ['repo-owner', 'repo-name', 'repo-branch'].forEach(id => {
             document.getElementById(id).addEventListener('change', saveRepoConfig);
         });
@@ -328,6 +443,17 @@
             renderLinkList();
         });
         document.getElementById('link-sub-select').addEventListener('change', renderLinkList);
+
+        // Move links selects
+        document.getElementById('move-src-cat').addEventListener('change', function() {
+            updateMoveSubSelects();
+        });
+        document.getElementById('move-src-sub').addEventListener('change', renderMoveLinkList);
+        document.getElementById('move-dest-cat').addEventListener('change', function() {
+            updateMoveSubSelects();
+        });
+        // destination sub change doesn't need special handler
+        document.getElementById('move-links-btn').addEventListener('click', handleMoveLinks);
 
         document.getElementById('save-local-btn').addEventListener('click', saveLocal);
         document.getElementById('push-github-btn').addEventListener('click', pushToGitHub);
