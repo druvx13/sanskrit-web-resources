@@ -125,10 +125,6 @@ window.SANSKRIT_DATA = [
     "primary": "TOOLS",
     "subCategories": [
       {
-        "name": null,
-        "links": []
-      },
-      {
         "name": "TRANSLITERATORS",
         "links": [
           {
