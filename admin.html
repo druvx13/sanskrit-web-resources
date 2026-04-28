@@ -52,6 +52,25 @@
         .token-area input { flex: 1; }
         .repo-config input { margin-bottom: 4px; }
         #status-message { margin: 8px 0; min-height: 1.2em; }
+        .move-link-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .move-link-item label {
+            margin:0;
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .move-selects {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .move-selects > div { flex: 1; min-width: 120px; }
     </style>
 </head>
 <body>
@@ -114,6 +133,38 @@
             <label>Description: <textarea id="new-link-desc" rows="3"></textarea></label>
             <button id="add-link-btn">Add Link</button>
         </div>
+    </div>
+
+    <!-- NEW MOVE LINKS SECTION -->
+    <div class="editor-section">
+        <h2>Move Links</h2>
+        <p>Select a source category and sub‑category, check the links you want to move, then choose a destination category and sub‑category.</p>
+        <div class="move-selects">
+            <div>
+                <label>Source Category:
+                    <select id="move-src-cat"></select>
+                </label>
+            </div>
+            <div>
+                <label>Source Sub‑Category:
+                    <select id="move-src-sub"></select>
+                </label>
+            </div>
+        </div>
+        <div id="move-src-links" style="margin: 10px 0;"></div>
+        <div class="move-selects">
+            <div>
+                <label>Destination Category:
+                    <select id="move-dest-cat"></select>
+                </label>
+            </div>
+            <div>
+                <label>Destination Sub‑Category:
+                    <select id="move-dest-sub"></select>
+                </label>
+            </div>
+        </div>
+        <button id="move-links-btn">Move Selected Links</button>
     </div>
 
     <div class="editor-section">
