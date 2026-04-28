@@ -144,6 +144,14 @@ window.SANSKRIT_DATA = [
             "desc": "Dharmamitra. A specialized machine translation and parsing tool designed to assist researchers and translators in breaking down and translating classical Sanskrit and Buddhist hybrid texts into English."
           }
         ]
+      },
+      {
+        "name": "TRANSLITERATORS",
+        "links": []
+      },
+      {
+        "name": "TRANSLATORS",
+        "links": []
       }
     ]
   },
