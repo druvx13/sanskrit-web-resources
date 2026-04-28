@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanskrit Web Resources · Retro Table Index</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 15px;
+            padding: 8px;
+            -webkit-text-size-adjust: 100%;
+        }
+        .container { max-width: 980px; margin: 0 auto; }
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin: 6px 0 14px;
+            padding-bottom: 4px;
+            border-bottom: 2px;
+        }
+        h2 {
+            font-size: 1.2rem;
+            margin: 18px 0 6px;
+            padding: 2px 0 2px 8px;
+            border-left: 4px;
+            scroll-margin-top: 10px;
+        }
+        h3 {
+            font-size: 1.05rem;
+            margin: 12px 0 4px;
+            font-weight: bold;
+            scroll-margin-top: 8px;
+        }
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 10px;
+            border: 1px;
+        }
+        .toc-box {
+            border: 1px;
+            padding: 8px 12px;
+            margin-bottom: 16px;
+        }
+        .toc-box .toc-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+        }
+        .toc-box a { text-decoration: underline; }
+        .toc-box .toc-primary { font-weight: bold; font-size: 0.92rem; }
+        .toc-box .toc-sub { font-size: 0.82rem; padding-left: 18px; }
+        .no-data { text-align: center; padding: 1.5rem; font-style: italic; font-size: 0.85rem; }
+        .footer-info {
+            text-align: center;
+            font-size: 0.75rem;
+            margin-top: 14px;
+            padding-top: 6px;
+            border-top: 1px;
+        }
+        @media (max-width: 600px) {
+            body { font-size: 13px; padding: 4px; }
+            h1 { font-size: 1.2rem; }
+            h2 { font-size: 1rem; }
+            h3 { font-size: 0.88rem; }
+            .toc-box .toc-title { font-size: 0.95rem; }
+            .toc-box .toc-primary { font-size: 0.8rem; }
+            .toc-box .toc-sub { font-size: 0.72rem; padding-left: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sanskrit Web Resources — Descriptive Stratum Index</h1>
+
+        <div class="toc-box" id="toc-container" role="navigation" aria-label="Table of Contents">
+            <!-- Dynamically populated -->
+        </div>
+
+        <div id="resources-container">
+            <p class="no-data">Loading resources…</p>
+        </div>
+        <p class="footer-info">
+            Persisted in browser storage · Each hyperlink is followed by its descriptive stratum
+        </p>
+    </div>
+
+    <!-- The independent data file -->
+    <script src="data.js"></script>
+
+    <!-- The main application logic, now in a separate file -->
+    <script src="app.js"></script>
+</body>
+</html>
