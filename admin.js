@@ -73,7 +73,8 @@
         const selects = [
             document.getElementById('edit-cat-select'),
             document.getElementById('sub-cat-target'),
-            document.getElementById('link-cat-select')
+            document.getElementById('link-cat-select'),
+            document.getElementById('del-sub-cat-select')
         ];
         selects.forEach(sel => {
             if (!sel) return;
@@ -88,6 +89,7 @@
         });
         populateMoveCatSelects();
         updateSubSelect();
+        updateDelSubSelect();
     }
 
     function populateMoveCatSelects() {
@@ -112,10 +114,20 @@
         if (!subSel) return;
         subSel.innerHTML = '<option value="">-- select --</option>';
         if (catIdx !== '' && catIdx !== null) {
-            const cat = currentData[catIdx];
-            cat.subCategories.forEach((sub, idx) => {
-                const label = sub.name || '(no label)';
-                subSel.add(new Option(label, idx));
+            currentData[catIdx].subCategories.forEach((sub, idx) => {
+                subSel.add(new Option(sub.name || '(no label)', idx));
+            });
+        }
+    }
+
+    function updateDelSubSelect() {
+        const catIdx = document.getElementById('del-sub-cat-select')?.value;
+        const subSel = document.getElementById('del-sub-select');
+        if (!subSel) return;
+        subSel.innerHTML = '<option value="">-- select --</option>';
+        if (catIdx !== '' && catIdx !== null) {
+            currentData[catIdx].subCategories.forEach((sub, idx) => {
+                subSel.add(new Option(sub.name || '(no label)', idx));
             });
         }
     }
@@ -184,7 +196,7 @@
         });
     }
 
-    // ── Inline editing for the link list ──
+    // ── Inline editing for the link list (textareas) ──
     function renderLinkList() {
         const container = document.getElementById('link-list-container');
         if (!container) return;
@@ -199,7 +211,6 @@
             div.className = 'list-item';
             div.dataset.index = li;
 
-            // Normal view (read-only textareas, Edit / Delete buttons)
             const normalView = document.createElement('div');
             normalView.className = 'inline-link normal-view';
             normalView.innerHTML = `
@@ -209,13 +220,12 @@
                 <button class="delete-link-btn">Delete</button>
             `;
 
-            // Editing view (hidden by default)
             const editView = document.createElement('div');
             editView.className = 'inline-link edit-view';
             editView.style.display = 'none';
             editView.innerHTML = `
-                <input type="text" style="flex:1;" class="url-input" value="${link.url}">
-                <input type="text" style="flex:2;" class="desc-input" value="${link.desc}">
+                <textarea style="flex:1;" class="url-input">${link.url}</textarea>
+                <textarea style="flex:2;" class="desc-input">${link.desc}</textarea>
                 <button class="save-link-btn">Save</button>
                 <button class="cancel-link-btn">Cancel</button>
             `;
@@ -224,7 +234,6 @@
             div.appendChild(editView);
             container.appendChild(div);
 
-            // Edit button -> switch to edit mode
             div.querySelector('.edit-link-btn').addEventListener('click', () => {
                 normalView.style.display = 'none';
                 editView.style.display = 'flex';
@@ -232,13 +241,11 @@
                 editView.querySelector('.desc-input').value = link.desc;
             });
 
-            // Cancel button -> switch back
             div.querySelector('.cancel-link-btn').addEventListener('click', () => {
                 editView.style.display = 'none';
                 normalView.style.display = 'flex';
             });
 
-            // Save button -> update data and refresh only this row
             div.querySelector('.save-link-btn').addEventListener('click', () => {
                 const newUrl = editView.querySelector('.url-input').value.trim();
                 const newDesc = editView.querySelector('.desc-input').value.trim();
@@ -248,13 +255,10 @@
                 }
                 link.url = newUrl;
                 link.desc = newDesc;
-                // Re-render the whole list (simple, and the editing row stays in place visually)
-                // To avoid losing scroll position, we could update only this row, but re-rendering is fine.
                 renderLinkList();
-                saveLocal(); // auto-save after edit
+                saveLocal();
             });
 
-            // Delete button
             div.querySelector('.delete-link-btn').addEventListener('click', () => {
                 if (confirm('Delete this link?')) {
                     currentData[catIdx].subCategories[subIdx].links.splice(li, 1);
@@ -269,7 +273,6 @@
         populateCatSelects();
         renderPreview();
         renderLinkList();
-        // also refresh move if selections exist
         if (document.getElementById('move-src-cat').value !== '' &&
             document.getElementById('move-src-sub').value !== '') {
             renderMoveLinkList();
@@ -306,7 +309,6 @@
         destLinks.push(...movedLinks);
         displayStatus(`Moved ${movedLinks.length} link(s).`, 'green');
         refreshAll();
-        // uncheck
         document.querySelectorAll('#move-src-links input[type="checkbox"]').forEach(cb => cb.checked = false);
     }
 
@@ -348,10 +350,12 @@
         refreshAll();
     }
 
-    function handleDeleteSub() {
-        const catIdx = document.getElementById('link-cat-select').value;
-        const subIdx = document.getElementById('link-sub-select').value;
-        if (catIdx === '' || subIdx === '') return displayStatus('Select category and sub‑category.', 'red');
+    function handleDedicatedDeleteSub() {
+        const catIdx = document.getElementById('del-sub-cat-select').value;
+        const subIdx = document.getElementById('del-sub-select').value;
+        if (catIdx === '' || subIdx === '') {
+            return displayStatus('Select both category and sub‑category to delete.', 'red');
+        }
         const sub = currentData[catIdx].subCategories[subIdx];
         if (confirm(`Delete sub‑category "${sub.name || '(no label)'}" and its ${sub.links.length} links?`)) {
             currentData[catIdx].subCategories.splice(subIdx, 1);
@@ -452,8 +456,10 @@
         document.getElementById('rename-cat-btn').addEventListener('click', handleRenameCategory);
         document.getElementById('delete-cat-btn').addEventListener('click', handleDeleteCategory);
         document.getElementById('add-sub-btn').addEventListener('click', handleAddEditSub);
-        document.getElementById('delete-sub-btn').addEventListener('click', handleDeleteSub);
         document.getElementById('add-link-btn').addEventListener('click', handleAddLink);
+
+        document.getElementById('del-sub-btn').addEventListener('click', handleDedicatedDeleteSub);
+        document.getElementById('del-sub-cat-select').addEventListener('change', updateDelSubSelect);
 
         document.getElementById('link-cat-select').addEventListener('change', () => {
             updateSubSelect();
