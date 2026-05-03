@@ -157,7 +157,24 @@ window.SANSKRIT_DATA = [
     "subCategories": [
       {
         "name": "RIG VEDA",
-        "links": []
+        "links": [
+          {
+            "url": "https://archive.org/details/in.ernet.dli.2015.467608",
+            "desc": "Rgveda-samhita With The Commentary Of Sayanacharya Vol. 1"
+          },
+          {
+            "url": "https://archive.org/details/in.ernet.dli.2015.467603",
+            "desc": "Rgveda-samhita With The Commentary Of Sayanacharya Vol. 2"
+          },
+          {
+            "url": "https://archive.org/details/in.ernet.dli.2015.281158/",
+            "desc": "Rgveda-samhita With The Commentary Of Sayanacharya Vol. 3"
+          },
+          {
+            "url": "https://archive.org/details/in.ernet.dli.2015.281889/",
+            "desc": "Rgveda-samhita With The Commentary Of Sayanacharya Vol. 4"
+          }
+        ]
       }
     ]
   }
