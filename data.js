@@ -154,6 +154,11 @@ window.SANSKRIT_DATA = [
   },
   {
     "primary": "THE VEDAS",
-    "subCategories": []
+    "subCategories": [
+      {
+        "name": "RIG VEDA",
+        "links": []
+      }
+    ]
   }
 ];
