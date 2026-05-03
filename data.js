@@ -151,5 +151,9 @@ window.SANSKRIT_DATA = [
         ]
       }
     ]
+  },
+  {
+    "primary": "THE VEDAS",
+    "subCategories": []
   }
 ];
